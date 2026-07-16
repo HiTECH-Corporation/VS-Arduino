@@ -1,0 +1,20 @@
+# Source and tooling — excluded from the shipped VSIX
+.vscode/**
+.vscode-test/**
+.claude/**
+node_modules/**
+src/**
+v0_Screens/**
+scripts/**
+Issues/**
+tsconfig.json
+package-lock.json
+.gitignore
+.vscodeignore
+out/**/*.map
+out/test/**
+
+# Embedded Cortex-Debug core must ship (debug adapter, images, syntaxes, support scripts)
+!src/debugger/cortex-debug-core/**
+
+# Shipped: out/**, media/**, package.json, README.md, CHANGELOG.md, LICENSE, ThirdPartyNotices.txt

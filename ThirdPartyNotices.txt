@@ -1,0 +1,128 @@
+THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
+
+VS Arduino
+Copyright (c) 2026 HiTECH Corporation
+
+This product incorporates components from the projects listed below. The
+original copyright notices and the licenses under which HiTECH Corporation
+received such components are set forth for informational purposes.
+
+================================================================================
+1. cortex-debug (embedded core)
+================================================================================
+Author: marus25 (Marcel Ball) and contributors
+Repository: https://github.com/Marus/cortex-debug
+License: MIT License
+
+VS Arduino embeds the compiled core of the cortex-debug extension to provide
+zero-configuration hardware debugging for ARM Cortex-M targets. The embedded
+build is derived from a fork maintained for this project.
+
+MIT License summary: Permission is granted, free of charge, to use, copy,
+modify, merge, publish, distribute, sublicense, and/or sell copies of the
+software, provided the copyright notice and permission notice are included in
+all copies or substantial portions. The software is provided "as is", without
+warranty of any kind.
+
+--------------------------------------------------------------------------------
+MIT License
+
+Copyright (c) 2017 Marcel Ball
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+2. vscode-arduino-intellisense (embedded logic)
+================================================================================
+Author: svnty
+Repository: https://github.com/svnty/vscode-arduino-intellisense
+License: MIT License
+
+VS Arduino's automatic IntelliSense configuration generator is based on the
+core logic of vscode-arduino-intellisense.
+
+MIT License summary: Permission is granted, free of charge, to use, copy,
+modify, merge, publish, distribute, sublicense, and/or sell copies of the
+software, provided the copyright notice and permission notice are included in
+all copies or substantial portions. The software is provided "as is", without
+warranty of any kind.
+
+--------------------------------------------------------------------------------
+MIT License
+
+Copyright (c) 2023 svnty
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+3. arduino-cli (external tool)
+================================================================================
+Author: Arduino SA
+Repository: https://github.com/arduino/arduino-cli
+License: GNU General Public License v3.0 (GPL-3.0)
+
+VS Arduino invokes arduino-cli as an external command-line tool for compiling,
+uploading, board/library management, and debug information. arduino-cli is not
+bundled, linked, or modified by this extension; it remains a separate program
+governed by its own license. Full license text:
+https://github.com/arduino/arduino-cli/blob/master/LICENSE.txt
+
+================================================================================
+4. Build-time and UI libraries (npm packages)
+================================================================================
+The webview user interfaces are compiled at build time with the following
+open-source packages. Their license notices apply to the bundled output.
+
+- react, react-dom (MIT License) — Copyright (c) Meta Platforms, Inc.
+  https://github.com/facebook/react
+- tailwindcss, @tailwindcss/postcss (MIT License) — Copyright (c) Tailwind Labs, Inc.
+  https://github.com/tailwindlabs/tailwindcss
+- esbuild (MIT License) — Copyright (c) 2020 Evan Wallace
+  https://github.com/evanw/esbuild
+- lucide-react (ISC License) — Copyright (c) Lucide Contributors
+  https://github.com/lucide-icons/lucide
+- postcss (MIT License) — Copyright (c) 2013 Andrey Sitnik
+  https://github.com/postcss/postcss
+- clsx (MIT License) — Copyright (c) Luke Edwards
+  https://github.com/lukeed/clsx
+- tailwind-merge (MIT License) — Copyright (c) Dany Castillo
+  https://github.com/dcastil/tailwind-merge
+- typescript (Apache License 2.0) — Copyright (c) Microsoft Corporation
+  https://github.com/microsoft/TypeScript
+- @vscode/webview-ui-toolkit (MIT License) — Copyright (c) Microsoft Corporation
+  https://github.com/microsoft/vscode-webview-ui-toolkit
+
+================================================================================
+END OF THIRD-PARTY NOTICES
