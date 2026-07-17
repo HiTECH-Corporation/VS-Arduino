@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="media/icons/logo.svg" alt="VS Arduino Logo" width="128" />
+  <img src="https://cdn.jsdelivr.net/gh/HiTECH-Corporation/VS-Arduino@latest/media/icons/logo.svg" alt="VS Arduino Logo" width="128" />
 </p>
 
 <h1 align="center">VS Arduino</h1>
@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  A complete Arduino development environment inside Visual Studio Code — build, upload, monitor, plot, and debug without leaving your editor.
+  A complete Arduino development environment inside Visual Studio Code — Build, upload, monitor, plot, and debug without leaving your editor.
 </p>
 
 <p align="center">
