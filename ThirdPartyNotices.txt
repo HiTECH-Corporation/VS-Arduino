@@ -100,29 +100,4 @@ governed by its own license. Full license text:
 https://github.com/arduino/arduino-cli/blob/master/LICENSE.txt
 
 ================================================================================
-4. Build-time and UI libraries (npm packages)
-================================================================================
-The webview user interfaces are compiled at build time with the following
-open-source packages. Their license notices apply to the bundled output.
-
-- react, react-dom (MIT License) — Copyright (c) Meta Platforms, Inc.
-  https://github.com/facebook/react
-- tailwindcss, @tailwindcss/postcss (MIT License) — Copyright (c) Tailwind Labs, Inc.
-  https://github.com/tailwindlabs/tailwindcss
-- esbuild (MIT License) — Copyright (c) 2020 Evan Wallace
-  https://github.com/evanw/esbuild
-- lucide-react (ISC License) — Copyright (c) Lucide Contributors
-  https://github.com/lucide-icons/lucide
-- postcss (MIT License) — Copyright (c) 2013 Andrey Sitnik
-  https://github.com/postcss/postcss
-- clsx (MIT License) — Copyright (c) Luke Edwards
-  https://github.com/lukeed/clsx
-- tailwind-merge (MIT License) — Copyright (c) Dany Castillo
-  https://github.com/dcastil/tailwind-merge
-- typescript (Apache License 2.0) — Copyright (c) Microsoft Corporation
-  https://github.com/microsoft/TypeScript
-- @vscode/webview-ui-toolkit (MIT License) — Copyright (c) Microsoft Corporation
-  https://github.com/microsoft/vscode-webview-ui-toolkit
-
-================================================================================
 END OF THIRD-PARTY NOTICES
