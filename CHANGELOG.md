@@ -4,7 +4,7 @@ All notable changes to the **VS Arduino** extension are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [2026.7.17]
+## [2026.7.1701]
 
 ### Added
 
