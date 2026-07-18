@@ -41,6 +41,10 @@ async function buildScreen(screen) {
 }
 
 async function main() {
+  if (!fs.existsSync(path.join(rootDir, 'v0_Screens'))) {
+    console.log('v0_Screens not found (CI or packaged checkout) - using committed media/ bundles')
+    return
+  }
   for (const screen of screens) {
     await buildScreen(screen)
     console.log(`Built "${screen.source}" -> media/${screen.output}`)

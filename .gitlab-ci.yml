@@ -1,0 +1,73 @@
+# GitLab CI/CD for VS Arduino
+#
+# Pipeline behavior:
+#   - Every commit on any branch  -> "verify" stage only (compile check, no publishing)
+#   - Git tag matching v*         -> full release: package + publish to VS Code Marketplace and Open VSX
+#
+# Release signal: push an annotated tag, e.g.
+#   git tag v2026.7.18 && git push origin v2026.7.18
+#
+# Required CI/CD variables (Settings > CI/CD > Variables, mark all as Masked):
+#   VSCE_PAT        - Azure DevOps Personal Access Token (Marketplace: Manage scope)
+#   OVSX_PAT        - Open VSX access token
+#   MARKETPLACE_PUBLISHER - HiTECH-Corporation
+#   OPENVSX_PUBLISHER     - HiTECH-Corp
+
+image: node:20
+
+stages:
+  - verify
+  - release
+
+.install_deps: &install_deps
+  - npm ci
+
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - .npm/
+  policy: pull-push
+
+variables:
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+
+verify:
+  stage: verify
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "pipeline" || $CI_PIPELINE_SOURCE == "web"'
+  script:
+    - *install_deps
+    - npm run compile
+    - node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('manifest OK')"
+
+release:
+  stage: release
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
+  script:
+    - *install_deps
+    - npm run compile
+    # Tag v2026.7.18 must match package.json version 2026.7.18
+    - |
+      PKG_VERSION=$(node -p "require('./package.json').version")
+      TAG_VERSION="${CI_COMMIT_TAG#v}"
+      if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+        echo "Tag ($TAG_VERSION) does not match package.json version ($PKG_VERSION)" >&2
+        exit 1
+      fi
+    # --- VS Code Marketplace ---
+    - node scripts/set-publisher.js "$MARKETPLACE_PUBLISHER"
+    - npx --yes @vscode/vsce package -o "vs-arduino-marketplace.vsix"
+    - npx --yes @vscode/vsce publish --packagePath "vs-arduino-marketplace.vsix" -p "$VSCE_PAT"
+    # --- Open VSX ---
+    - node scripts/set-publisher.js "$OPENVSX_PUBLISHER"
+    - npx --yes @vscode/vsce package -o "vs-arduino-openvsx.vsix"
+    - npx --yes ovsx publish "vs-arduino-openvsx.vsix" -p "$OVSX_PAT"
+  artifacts:
+    paths:
+      - "*.vsix"
+    expire_in: 30 days
