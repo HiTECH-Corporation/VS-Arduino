@@ -49,17 +49,6 @@ release:
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v/'
   script:
-    # Fail fast with a clear message when CI/CD variables are missing
-    # (typical cause: variables marked Protected while the v* tag is not a protected tag)
-    - |
-      for var_name in VSCE_PAT OVSX_PAT MARKETPLACE_PUBLISHER OPENVSX_PUBLISHER; do
-        eval "var_value=\${$var_name:-}"
-        if [ -z "$var_value" ]; then
-          echo "Missing CI/CD variable: $var_name" >&2
-          echo "Check Settings > CI/CD > Variables. If it is Protected, add 'v*' under Settings > Repository > Protected tags." >&2
-          exit 1
-        fi
-      done
     - *install_deps
     - npm run compile
     # Tag v2026.7.18 must match package.json version 2026.7.18
