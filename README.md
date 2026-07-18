@@ -12,9 +12,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Install%20from-VS%20Marketplace-blue" alt="Install from Visual Studio Marketplace" />
-  <img src="https://img.shields.io/badge/Install%20from-Open%20VSX-purple" alt="Install from Open VSX" />
-
+  <a href="https://marketplace.visualstudio.com/items?itemName=HiTECH-Corporation.vs-arduino"><img src="https://img.shields.io/badge/Install%20from-VS%20Marketplace-blue" alt="Install from Visual Studio Marketplace" /></a>
+  <a href="https://open-vsx.org/extension/HiTECH-Corp/vs-arduino"><img src="https://img.shields.io/badge/Install%20from-Open%20VSX-purple" alt="Install from Open VSX" /></a>
 </p>
 
 <p align="center">
