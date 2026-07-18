@@ -2,6 +2,7 @@
 .vscode/**
 .vscode-test/**
 .claude/**
+.npm/**
 node_modules/**
 src/**
 v0_Screens/**
@@ -11,6 +12,8 @@ tsconfig.json
 package-lock.json
 .gitignore
 .vscodeignore
+.gitlab-ci.yml
+*.vsix
 out/**/*.map
 out/test/**
 

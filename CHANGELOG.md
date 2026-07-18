@@ -4,6 +4,13 @@ All notable changes to the **VS Arduino** extension are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2026.7.1801]
+
+### Fixed
+
+- Slimmed the published package back to its intended contents; CI build caches are no longer bundled into the VSIX.
+- Release pipeline now verifies package size and skips already-published versions instead of failing.
+
 ## [2026.7.1701]
 
 ### Added

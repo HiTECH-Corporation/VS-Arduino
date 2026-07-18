@@ -62,11 +62,20 @@ release:
     # --- VS Code Marketplace ---
     - node scripts/set-publisher.js "$MARKETPLACE_PUBLISHER"
     - npx --yes @vscode/vsce package -o "vs-arduino-marketplace.vsix"
-    - npx --yes @vscode/vsce publish --packagePath "vs-arduino-marketplace.vsix" -p "$VSCE_PAT"
+    # Size guard: a healthy package is ~1 MB; anything huge means junk leaked into the VSIX
+    - |
+      for vsix in vs-arduino-marketplace.vsix; do
+        SIZE=$(stat -c%s "$vsix")
+        if [ "$SIZE" -gt 20000000 ]; then
+          echo "$vsix is $((SIZE / 1000000)) MB — packaging leak detected, refusing to publish" >&2
+          exit 1
+        fi
+      done
+    - npx --yes @vscode/vsce publish --packagePath "vs-arduino-marketplace.vsix" -p "$VSCE_PAT" --skip-duplicate
     # --- Open VSX ---
     - node scripts/set-publisher.js "$OPENVSX_PUBLISHER"
     - npx --yes @vscode/vsce package -o "vs-arduino-openvsx.vsix"
-    - npx --yes ovsx publish "vs-arduino-openvsx.vsix" -p "$OVSX_PAT"
+    - npx --yes ovsx publish "vs-arduino-openvsx.vsix" -p "$OVSX_PAT" --skip-duplicate
   artifacts:
     paths:
       - "*.vsix"
