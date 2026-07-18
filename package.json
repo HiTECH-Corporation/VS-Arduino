@@ -2,7 +2,7 @@
   "name": "vs-arduino",
   "displayName": "VS Arduino",
   "description": "Program Arduino directly in VS Code using arduino-cli",
-  "version": "2026.7.1701",
+  "version": "2026.7.18",
   "publisher": "HiTECH-Corporation",
   "license": "MIT",
   "author": {
