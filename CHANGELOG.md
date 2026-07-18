@@ -4,6 +4,18 @@ All notable changes to the **VS Arduino** extension are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2026.7.1802]
+
+### Added
+
+- Localized READMEs in Vietnamese, Japanese, and Chinese with a language switcher.
+- Contributing guide and GitHub issue templates (Bug Report, Feature Request).
+
+### Changed
+
+- README expanded with Installation, Getting Started, Requirements, FAQ & Troubleshooting, and Credits sections.
+- Open VSX releases now publish under the `HiTECH-Corporation` namespace, matching the VS Code Marketplace.
+
 ## [2026.7.1801]
 
 ### Fixed

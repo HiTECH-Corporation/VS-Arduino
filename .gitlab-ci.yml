@@ -11,7 +11,7 @@
 #   VSCE_PAT        - Azure DevOps Personal Access Token (Marketplace: Manage scope)
 #   OVSX_PAT        - Open VSX access token
 #   MARKETPLACE_PUBLISHER - HiTECH-Corporation
-#   OPENVSX_PUBLISHER     - HiTECH-Corp
+#   OPENVSX_PUBLISHER     - HiTECH-Corporation (namespace granted by Open VSX moderators)
 
 image: node:20
 
