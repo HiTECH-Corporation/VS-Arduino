@@ -12,6 +12,12 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Install%20from-VS%20Marketplace-blue" alt="Install from Visual Studio Marketplace" />
+  <img src="https://img.shields.io/badge/Install%20from-Open%20VSX-purple" alt="Install from Open VSX" />
+
+</p>
+
+<p align="center">
   A complete Arduino development environment inside Visual Studio Code — Build, upload, monitor, plot, and debug without leaving your editor.
 </p>
 
