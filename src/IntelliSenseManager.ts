@@ -6,6 +6,7 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fsPromises from 'fs/promises';
 import * as fs from 'fs';
+import { ArduinoCliManager } from './ArduinoCliManager';
 
 function debounce<T extends (...args: any[]) => void>(fn: T, wait: number): T {
     let timeout: NodeJS.Timeout | undefined;
@@ -25,14 +26,16 @@ interface BoardProperties {
 
 export class IntelliSenseManager {
     private channel: vscode.OutputChannel;
+    private cliManager: ArduinoCliManager;
     private includeActiveCache: { [file: string]: string } = {};
     private debouncedRegenerate: { [file: string]: () => void } = {};
     private _docs: { [file: string]: string } = {};
     private compilationCache: { [file: string]: { activeIncludes: string; fqbn: string; properties: BoardProperties; } } = {};
     private isRegenerating: { [file: string]: boolean } = {};
 
-    constructor(channel: vscode.OutputChannel) {
+    constructor(channel: vscode.OutputChannel, cliManager: ArduinoCliManager) {
         this.channel = channel;
+        this.cliManager = cliManager;
     }
 
     public initialize(context: vscode.ExtensionContext) {
@@ -346,7 +349,8 @@ export class IntelliSenseManager {
             this.channel.appendLine(`[IntelliSense] Compiling sketch ${tempSketchPath} for board ${FQBN}...`);
 
             const cliPath = vscode.workspace.getConfiguration('vs-arduino').get<string>('arduinoCliPath') || 'arduino-cli';
-            const args = ['compile', '--fqbn', FQBN, tempSketchPath, '--verbose'];
+            const configArg = await this.cliManager.getConfigFileArg();
+            const args = ['compile', ...configArg, '--fqbn', FQBN, tempSketchPath, '--verbose'];
             const proc = spawn(`"${cliPath}"`, args, { shell: true });
             let stdout = '';
             let stderr = '';

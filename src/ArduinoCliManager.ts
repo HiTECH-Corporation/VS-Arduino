@@ -278,13 +278,15 @@ export class ArduinoCliManager {
         }
     }
 
-    private runCliCommandJson(args: string[]): Promise<any> {
+    private async runCliCommandJson(args: string[]): Promise<any> {
+        const configArg = await this.getConfigFileArg();
         return new Promise((resolve, reject) => {
             const config = vscode.workspace.getConfiguration('vs-arduino');
             const cliPath = config.get<string>('arduinoCliPath') || 'arduino-cli';
             const dataDir = config.get<string>('arduinoDataDir');
             
-            const mappedArgs = args.map(a => a.includes(' ') ? `"${a}"` : a);
+            const combinedArgs = [...configArg, ...args];
+            const mappedArgs = combinedArgs.map(a => a.includes(' ') ? `"${a}"` : a);
             const env = dataDir ? { ...process.env, ARDUINO_DIRECTORIES_USER: dataDir } : process.env;
             const child = spawn(`"${cliPath}"`, mappedArgs, { shell: true, env });
             let stdoutStr = '';
@@ -488,7 +490,7 @@ export class ArduinoCliManager {
         }
     }
 
-    private async getConfigFileArg(): Promise<string[]> {
+    public async getConfigFileArg(): Promise<string[]> {
         const pathsToCheck = [
             path.join(os.homedir(), '.arduinoIDE', 'arduino-cli.yaml'),
             path.join(os.homedir(), '.arduino15', 'arduino-cli.yaml'),
