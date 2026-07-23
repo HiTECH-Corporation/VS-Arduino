@@ -41,9 +41,10 @@ export class SerialConnectionManager {
 
         const cliPath = config.get<string>('arduinoCliPath') || 'arduino-cli';
 
+        const configArg = await this.cliManager.getConfigFileArg();
         // --quiet removes "Port open" messages.
         // --raw sets unbuffered output mode so data streams immediately.
-        const args = ['monitor', '-p', this.currentPort, '-b', this.currentBoard, '--config', `baudrate=${this.currentBaudRate}`, '--quiet', '--raw'];
+        const args = ['monitor', ...configArg, '-p', this.currentPort, '-b', this.currentBoard, '--config', `baudrate=${this.currentBaudRate}`, '--quiet', '--raw'];
 
         this.process = spawn(`"${cliPath}"`, args, { shell: true });
 

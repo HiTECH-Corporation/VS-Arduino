@@ -46,7 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showErrorMessage(`VS Arduino Initialization error: ${errorMsg}`);
     });
 
-    const intelliSenseManager = new IntelliSenseManager(outputChannel);
+    const intelliSenseManager = new IntelliSenseManager(outputChannel, cliManager);
     intelliSenseManager.initialize(context);
 
     const diagnosticCollection = vscode.languages.createDiagnosticCollection('arduino');
