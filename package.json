@@ -183,6 +183,14 @@
         "icon": "$(new-file)"
       },
       {
+        "command": "vs-arduino.addBoardManagerUrl",
+        "title": "VS Arduino: Add Board Manager URL"
+      },
+      {
+        "command": "vs-arduino.updateIndex",
+        "title": "VS Arduino: Update Board/Library Indexes"
+      },
+      {
         "command": "vs-arduino.debug",
         "title": "VS Arduino: Debug Sketch",
         "icon": "$(debug-alt)"
@@ -600,6 +608,14 @@
             },
             "default": [],
             "description": "Board packages and libraries excluded from update notifications, identified by name."
+          },
+          "vs-arduino.additionalUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Additional Board Manager URLs for 3rd party platforms (ESP32, ESP8266, RP2040, STM32, etc.)."
           }
         }
       },

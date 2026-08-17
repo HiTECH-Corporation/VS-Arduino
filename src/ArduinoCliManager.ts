@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { exec, spawn } from 'child_process';
+import { exec, spawn, ChildProcess } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
 import * as fsPromises from 'fs/promises';
@@ -325,7 +325,8 @@ export class ArduinoCliManager {
 
     public async getBoardListAll(): Promise<any[]> {
         try {
-            const data = await this.runCliCommandJson(['board', 'listall', '--format', 'json']);
+            const additionalUrlsArgs = this.getAdditionalUrlsArgs();
+            const data = await this.runCliCommandJson(['board', 'listall', ...additionalUrlsArgs, '--format', 'json']);
             return data.boards || [];
         } catch (error) {
             this.outputChannel.appendLine(`[CLI] Error getting board list: ${error}`);
@@ -374,9 +375,10 @@ export class ArduinoCliManager {
 
     public async searchCore(query: string): Promise<any[]> {
         try {
-            const args = ['core', 'search', '--format', 'json'];
+            const additionalUrlsArgs = this.getAdditionalUrlsArgs();
+            const args = ['core', 'search', ...additionalUrlsArgs, '--format', 'json'];
             if (query && query.trim() !== '') {
-                args.splice(2, 0, query.trim());
+                args.splice(2 + additionalUrlsArgs.length, 0, query.trim());
             }
             const data = await this.runCliCommandJson(args);
             return data?.platforms || [];
@@ -399,7 +401,8 @@ export class ArduinoCliManager {
 
     public async getCoreDetails(name: string): Promise<any> {
         try {
-            const data = await this.runCliCommandJson(['core', 'search', name, '--all', '--format', 'json']);
+            const additionalUrlsArgs = this.getAdditionalUrlsArgs();
+            const data = await this.runCliCommandJson(['core', 'search', name, '--all', ...additionalUrlsArgs, '--format', 'json']);
             return Array.isArray(data) && data.length > 0 ? data[0] : data;
         } catch (error) {
             this.outputChannel.appendLine(`[CLI] Error getting core details: ${error}`);
@@ -407,30 +410,31 @@ export class ArduinoCliManager {
         }
     }
 
-    public async installLibrary(name: string, version?: string): Promise<void> {
+    public async installLibrary(name: string, version?: string, token?: vscode.CancellationToken): Promise<void> {
         const pkg = version ? `${name}@${version}` : name;
         this.outputChannel.show(true);
         this.outputChannel.appendLine(`[Packages] Installing library ${pkg}...`);
-        await this.runCliCommandStream(['lib', 'install', pkg]);
+        await this.runCliCommandStream(['lib', 'install', pkg], token);
     }
 
-    public async installCore(name: string, version?: string): Promise<void> {
+    public async installCore(name: string, version?: string, token?: vscode.CancellationToken): Promise<void> {
         const pkg = version ? `${name}@${version}` : name;
+        const additionalUrlsArgs = this.getAdditionalUrlsArgs();
         this.outputChannel.show(true);
         this.outputChannel.appendLine(`[Packages] Installing core ${pkg}...`);
-        await this.runCliCommandStream(['core', 'install', pkg]);
+        await this.runCliCommandStream(['core', 'install', ...additionalUrlsArgs, pkg], token);
     }
 
-    public async uninstallLibrary(name: string): Promise<void> {
+    public async uninstallLibrary(name: string, token?: vscode.CancellationToken): Promise<void> {
         this.outputChannel.show(true);
         this.outputChannel.appendLine(`[Packages] Uninstalling library ${name}...`);
-        await this.runCliCommandStream(['lib', 'uninstall', name]);
+        await this.runCliCommandStream(['lib', 'uninstall', name], token);
     }
 
-    public async uninstallCore(name: string): Promise<void> {
+    public async uninstallCore(name: string, token?: vscode.CancellationToken): Promise<void> {
         this.outputChannel.show(true);
         this.outputChannel.appendLine(`[Packages] Uninstalling core ${name}...`);
-        await this.runCliCommandStream(['core', 'uninstall', name]);
+        await this.runCliCommandStream(['core', 'uninstall', name], token);
     }
 
     public async listInstalledLibraries(): Promise<any[]> {
@@ -481,16 +485,17 @@ export class ArduinoCliManager {
         }
     }
 
-    public async upgradeLibrary(name: string): Promise<void> {
+    public async upgradeLibrary(name: string, token?: vscode.CancellationToken): Promise<void> {
         this.outputChannel.show(true);
         this.outputChannel.appendLine(`[Packages] Upgrading library ${name}...`);
-        await this.runCliCommandStream(['lib', 'upgrade', name]);
+        await this.runCliCommandStream(['lib', 'upgrade', name], token);
     }
 
-    public async upgradeCore(id: string): Promise<void> {
+    public async upgradeCore(id: string, token?: vscode.CancellationToken): Promise<void> {
+        const additionalUrlsArgs = this.getAdditionalUrlsArgs();
         this.outputChannel.show(true);
         this.outputChannel.appendLine(`[Packages] Upgrading core ${id}...`);
-        await this.runCliCommandStream(['core', 'upgrade', id]);
+        await this.runCliCommandStream(['core', 'upgrade', ...additionalUrlsArgs, id], token);
     }
 
     public async getLibraryExamples(name: string): Promise<any[]> {
@@ -602,9 +607,27 @@ export class ArduinoCliManager {
         return [];
     }
 
-    public async compile(fqbn: string, sketchPath: string, optimizeForDebug: boolean = false, buildPath?: string): Promise<{ stdout: string, stderr: string }> {
+    public getAdditionalUrlsArgs(): string[] {
+        const config = vscode.workspace.getConfiguration('vs-arduino');
+        const urls = config.get<string[]>('additionalUrls') || [];
+        const validUrls = urls.map(u => u.trim()).filter(u => u.length > 0);
+        if (validUrls.length === 0) {
+            return [];
+        }
+        return ['--additional-urls', validUrls.join(',')];
+    }
+
+    public async updateIndex(token?: vscode.CancellationToken): Promise<void> {
+        const additionalUrlsArgs = this.getAdditionalUrlsArgs();
+        this.outputChannel.show(true);
+        this.outputChannel.appendLine('[Core] Updating package indexes...');
+        await this.runCliCommandStream(['core', 'update-index', ...additionalUrlsArgs], token);
+    }
+
+    public async compile(fqbn: string, sketchPath: string, optimizeForDebug: boolean = false, buildPath?: string, token?: vscode.CancellationToken): Promise<{ stdout: string, stderr: string }> {
         const configArg = await this.getConfigFileArg();
-        const args = ['compile', '--no-color', ...configArg, '-b', fqbn, sketchPath];
+        const additionalUrlsArgs = this.getAdditionalUrlsArgs();
+        const args = ['compile', '--no-color', ...configArg, ...additionalUrlsArgs, '-b', fqbn, sketchPath];
         if (optimizeForDebug) { args.push('--optimize-for-debug'); }
         if (buildPath) { args.push('--build-path', buildPath); }
 
@@ -613,22 +636,32 @@ export class ArduinoCliManager {
         if (sketchbookPath) {
             args.push('--libraries', path.join(sketchbookPath, 'libraries'));
         }
-        return this.runCliCommandStream(args);
+        return this.runCliCommandStream(args, token);
     }
 
-    public async upload(fqbn: string, port: string, sketchPath: string): Promise<{ stdout: string, stderr: string }> {
+    public async upload(fqbn: string, port: string, sketchPath: string, token?: vscode.CancellationToken): Promise<{ stdout: string, stderr: string }> {
         const configArg = await this.getConfigFileArg();
-        const args = ['compile', '--upload', '--no-color', ...configArg, '-b', fqbn, '-p', port, sketchPath];
+        const additionalUrlsArgs = this.getAdditionalUrlsArgs();
+        const args = ['compile', '--upload', '--no-color', ...configArg, ...additionalUrlsArgs, '-b', fqbn, '-p', port, sketchPath];
 
         const config = vscode.workspace.getConfiguration('vs-arduino');
         const sketchbookPath = config.get<string>('sketchbookPath');
         if (sketchbookPath) {
             args.push('--libraries', path.join(sketchbookPath, 'libraries'));
         }
-        return this.runCliCommandStream(args);
+        return this.runCliCommandStream(args, token);
     }
 
-    private runCliCommandStream(args: string[]): Promise<{ stdout: string, stderr: string }> {
+    private killProcess(child: ChildProcess): void {
+        if (!child || child.killed) { return; }
+        if (os.platform() === 'win32' && child.pid) {
+            exec(`taskkill /pid ${child.pid} /T /F`, () => {});
+        } else {
+            child.kill('SIGTERM');
+        }
+    }
+
+    private runCliCommandStream(args: string[], token?: vscode.CancellationToken): Promise<{ stdout: string, stderr: string }> {
         return new Promise((resolve, reject) => {
             const config = vscode.workspace.getConfiguration('vs-arduino');
             const cliPath = config.get<string>('arduinoCliPath') || 'arduino-cli';
@@ -639,6 +672,20 @@ export class ArduinoCliManager {
             const child = spawn(`"${cliPath}"`, mappedArgs, { shell: true, env });
             let stdoutStr = '';
             let stderrStr = '';
+            let isCancelled = false;
+
+            let cancellationListener: vscode.Disposable | undefined;
+            if (token) {
+                if (token.isCancellationRequested) {
+                    this.killProcess(child);
+                    return reject(new vscode.CancellationError());
+                }
+                cancellationListener = token.onCancellationRequested(() => {
+                    isCancelled = true;
+                    this.outputChannel.appendLine('\n[Process] Cancellation requested by user. Terminating process...');
+                    this.killProcess(child);
+                });
+            }
 
             child.stdout.on('data', (data: Buffer) => {
                 const str = data.toString();
@@ -653,7 +700,10 @@ export class ArduinoCliManager {
             });
 
             child.on('close', (code: number) => {
-                if (code === 0) {
+                cancellationListener?.dispose();
+                if (isCancelled) {
+                    reject(new vscode.CancellationError());
+                } else if (code === 0) {
                     resolve({ stdout: stdoutStr, stderr: stderrStr });
                 } else {
                     const err = new Error(`Command failed with exit code ${code}`);
@@ -664,6 +714,7 @@ export class ArduinoCliManager {
             });
 
             child.on('error', (err: Error) => {
+                cancellationListener?.dispose();
                 reject(err);
             });
         });
