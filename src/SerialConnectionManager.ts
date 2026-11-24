@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { spawn, ChildProcess } from 'child_process';
+import { exec, spawn, ChildProcess } from 'child_process';
+import * as os from 'os';
 import { ArduinoCliManager } from './ArduinoCliManager';
 
 export class SerialConnectionManager {
@@ -74,9 +75,18 @@ export class SerialConnectionManager {
         this._onStateChange.fire(true);
     }
 
+    private killProcess(child: ChildProcess): void {
+        if (!child || child.killed) { return; }
+        if (os.platform() === 'win32' && child.pid) {
+            exec(`taskkill /pid ${child.pid} /T /F`, () => {});
+        } else {
+            child.kill('SIGTERM');
+        }
+    }
+
     public stop() {
         if (this.process) {
-            this.process.kill();
+            this.killProcess(this.process);
             this.process = undefined;
             this._onStateChange.fire(false);
         }
@@ -100,7 +110,8 @@ export class SerialConnectionManager {
 
     private parseLine(line: string) {
         if (!line) return;
-        const parts = line.split(/[\s,]+/).filter(p => p !== '');
+        const sanitized = line.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        const parts = sanitized.split(/[\s,]+/).filter(p => p !== '');
         const values: number[] = [];
         const labels: string[] = [];
 

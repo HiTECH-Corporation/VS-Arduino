@@ -89,8 +89,9 @@ export class ExampleBrowser {
         const entries = await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: source.type === 'core' ? 'Loading installed board packages...' : 'Loading installed libraries...',
-            cancellable: false
-        }, async () => {
+            cancellable: true
+        }, async (progress, token) => {
+            if (token.isCancellationRequested) { return []; }
             return source.type === 'core'
                 ? this.listCoreEntries()
                 : this.listLibraryEntries();
@@ -151,8 +152,9 @@ export class ExampleBrowser {
         const entries = await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: `Loading examples for ${itemName}...`,
-            cancellable: false
-        }, async () => {
+            cancellable: true
+        }, async (progress, token) => {
+            if (token.isCancellationRequested) { return []; }
             if (type === 'library') {
                 return this.cliManager.getLibraryExamples(itemName);
             }
@@ -262,7 +264,16 @@ export class ExampleBrowser {
                 return;
             }
 
-            const exampleName = path.basename(examplePath);
+            let srcDir = examplePath;
+            try {
+                const stat = await fs.promises.stat(examplePath);
+                if (stat.isFile()) {
+                    srcDir = path.dirname(examplePath);
+                }
+            } catch {
+            }
+
+            const exampleName = path.basename(srcDir);
             let destDir = path.join(sketchbookDir, exampleName);
             let suffix = 2;
             while (fs.existsSync(destDir)) {
@@ -270,7 +281,7 @@ export class ExampleBrowser {
                 suffix++;
             }
 
-            await fs.promises.cp(examplePath, destDir, { recursive: true });
+            await fs.promises.cp(srcDir, destDir, { recursive: true });
 
             const destName = path.basename(destDir);
             if (destName !== exampleName) {
@@ -286,7 +297,8 @@ export class ExampleBrowser {
                 { forceNewWindow: target === 'newWindow' }
             );
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to open example: ${error}`);
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            vscode.window.showErrorMessage(`Failed to open example: ${errorMsg}`);
         }
     }
 }

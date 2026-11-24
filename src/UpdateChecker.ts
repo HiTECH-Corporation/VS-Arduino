@@ -69,24 +69,41 @@ export class UpdateChecker {
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: 'Updating Arduino packages...',
-            cancellable: false
-        }, async () => {
+            cancellable: true
+        }, async (progress, token) => {
             for (const board of boards) {
+                if (token.isCancellationRequested) {
+                    this.outputChannel.appendLine('[Update] Update cancelled by user.');
+                    vscode.window.showInformationMessage('Arduino packages update cancelled.');
+                    return;
+                }
                 try {
-                    await this.cliManager.upgradeCore(board.id);
+                    await this.cliManager.upgradeCore(board.id, token);
                 } catch (error) {
+                    if (token.isCancellationRequested || error instanceof vscode.CancellationError) {
+                        vscode.window.showInformationMessage('Arduino packages update cancelled.');
+                        return;
+                    }
                     this.outputChannel.appendLine(`[Update] Failed to upgrade board package ${board.name}: ${error}`);
                 }
             }
             for (const lib of libs) {
+                if (token.isCancellationRequested) {
+                    this.outputChannel.appendLine('[Update] Update cancelled by user.');
+                    vscode.window.showInformationMessage('Arduino packages update cancelled.');
+                    return;
+                }
                 try {
-                    await this.cliManager.upgradeLibrary(lib.id);
+                    await this.cliManager.upgradeLibrary(lib.id, token);
                 } catch (error) {
+                    if (token.isCancellationRequested || error instanceof vscode.CancellationError) {
+                        vscode.window.showInformationMessage('Arduino packages update cancelled.');
+                        return;
+                    }
                     this.outputChannel.appendLine(`[Update] Failed to upgrade library ${lib.name}: ${error}`);
                 }
             }
+            vscode.window.showInformationMessage('Arduino packages updated.');
         });
-
-        vscode.window.showInformationMessage('Arduino packages updated.');
     }
 }

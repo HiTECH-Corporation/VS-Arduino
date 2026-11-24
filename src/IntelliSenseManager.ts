@@ -104,6 +104,28 @@ export class IntelliSenseManager {
                 this.debouncedRegenerate[doc.fileName]();
             }
         }));
+
+        context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(doc => {
+            if (!doc.fileName.endsWith('.ino')) return;
+            delete this._docs[doc.fileName];
+            delete this.includeActiveCache[doc.fileName];
+            delete this.debouncedRegenerate[doc.fileName];
+            delete this.compilationCache[doc.fileName];
+            delete this.isRegenerating[doc.fileName];
+            delete this.pendingRegenerate[doc.fileName];
+        }));
+
+        context.subscriptions.push(vscode.workspace.onDidDeleteFiles(event => {
+            event.files.forEach(uri => {
+                const fsPath = uri.fsPath;
+                delete this._docs[fsPath];
+                delete this.includeActiveCache[fsPath];
+                delete this.debouncedRegenerate[fsPath];
+                delete this.compilationCache[fsPath];
+                delete this.isRegenerating[fsPath];
+                delete this.pendingRegenerate[fsPath];
+            });
+        }));
     }
 
     private isInsideVscodeDir(filePath: string): boolean {
@@ -448,7 +470,8 @@ export class IntelliSenseManager {
             }
 
             const buildPathArg = buildDir ? ['--build-path', buildDir] : [];
-            const args = ['compile', ...configArg, '--fqbn', FQBN, ...buildPathArg, tempSketchPath, '--verbose'];
+            const additionalUrlsArgs = this.cliManager.getAdditionalUrlsArgs();
+            const args = ['compile', ...configArg, ...additionalUrlsArgs, '--fqbn', FQBN, ...buildPathArg, tempSketchPath, '--verbose'];
             const proc = spawn(`"${cliPath}"`, args, { shell: true });
             let stdout = '';
             let stderr = '';

@@ -300,16 +300,21 @@ export function activate(context: vscode.ExtensionContext) {
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: "Compiling Sketch...",
-            cancellable: false
-        }, async (progress) => {
+            cancellable: true
+        }, async (progress, token) => {
             try {
                 diagnosticCollection.clear();
                 outputChannel.show(true);
                 outputChannel.appendLine(`\n[Compile] Building for ${board}`);
-                const { stdout, stderr } = await cliManager.compile(board, sketchPath);
+                const { stdout, stderr } = await cliManager.compile(board, sketchPath, false, undefined, token);
                 parseDiagnostics(stderr, diagnosticCollection);
                 vscode.window.showInformationMessage('Compilation succeeded!');
             } catch (error: any) {
+                if (token.isCancellationRequested || error instanceof vscode.CancellationError) {
+                    outputChannel.appendLine('\n[Compile] Compilation cancelled.');
+                    vscode.window.showInformationMessage('Compilation cancelled.');
+                    return;
+                }
                 if (error.stderr) {
                     parseDiagnostics(error.stderr, diagnosticCollection);
                 }
@@ -411,12 +416,10 @@ export function activate(context: vscode.ExtensionContext) {
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: "Uploading Sketch...",
-            cancellable: false
-        }, async (progress) => {
+            cancellable: true
+        }, async (progress, token) => {
+            const wasActive = serialConnectionManager.isActive();
             try {
-
-                const wasActive = serialConnectionManager.isActive();
-
                 if (wasActive) {
                     serialConnectionManager.stop();
                     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -424,15 +427,19 @@ export function activate(context: vscode.ExtensionContext) {
 
                 outputChannel.show(true);
                 outputChannel.appendLine(`\n[Upload] Building and uploading to ${board} on ${port}`);
-                await cliManager.upload(board, port, sketchPath);
+                await cliManager.upload(board, port, sketchPath, token);
                 vscode.window.showInformationMessage('Upload succeeded!');
-
-                if (wasActive) {
+            } catch (error: any) {
+                if (token.isCancellationRequested || error instanceof vscode.CancellationError) {
+                    outputChannel.appendLine('\n[Upload] Upload cancelled.');
+                    vscode.window.showInformationMessage('Upload cancelled.');
+                    return;
+                }
+                vscode.window.showErrorMessage('Upload failed. Check output for details.');
+            } finally {
+                if (wasActive && !serialConnectionManager.isActive()) {
                     await serialConnectionManager.start(port, board);
                 }
-
-            } catch (error) {
-                vscode.window.showErrorMessage('Upload failed. Check output for details.');
             }
         });
     }));
@@ -450,16 +457,21 @@ export function activate(context: vscode.ExtensionContext) {
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: `Compiling Sketch in ${path.basename(sketchPath)}...`,
-            cancellable: false
-        }, async (progress) => {
+            cancellable: true
+        }, async (progress, token) => {
             try {
                 diagnosticCollection.clear();
                 outputChannel.show(true);
                 outputChannel.appendLine(`\n[Compile] Building for ${board}`);
-                const { stdout, stderr } = await cliManager.compile(board, sketchPath);
+                const { stdout, stderr } = await cliManager.compile(board, sketchPath, false, undefined, token);
                 parseDiagnostics(stderr, diagnosticCollection);
                 vscode.window.showInformationMessage(`Compilation succeeded for ${path.basename(sketchPath)}!`);
             } catch (error: any) {
+                if (token.isCancellationRequested || error instanceof vscode.CancellationError) {
+                    outputChannel.appendLine('\n[Compile] Compilation cancelled.');
+                    vscode.window.showInformationMessage('Compilation cancelled.');
+                    return;
+                }
                 if (error.stderr) {
                     parseDiagnostics(error.stderr, diagnosticCollection);
                 }
@@ -483,11 +495,10 @@ export function activate(context: vscode.ExtensionContext) {
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: `Uploading Sketch from ${path.basename(sketchPath)}...`,
-            cancellable: false
-        }, async (progress) => {
+            cancellable: true
+        }, async (progress, token) => {
+            const wasActive = serialConnectionManager.isActive();
             try {
-                const wasActive = serialConnectionManager.isActive();
-
                 if (wasActive) {
                     serialConnectionManager.stop();
                     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -495,15 +506,107 @@ export function activate(context: vscode.ExtensionContext) {
 
                 outputChannel.show(true);
                 outputChannel.appendLine(`\n[Upload] Building and uploading to ${board} on ${port}`);
-                await cliManager.upload(board, port, sketchPath);
+                await cliManager.upload(board, port, sketchPath, token);
                 vscode.window.showInformationMessage(`Upload succeeded for ${path.basename(sketchPath)}!`);
-
-                if (wasActive) {
+            } catch (error: any) {
+                if (token.isCancellationRequested || error instanceof vscode.CancellationError) {
+                    outputChannel.appendLine('\n[Upload] Upload cancelled.');
+                    vscode.window.showInformationMessage('Upload cancelled.');
+                    return;
+                }
+                vscode.window.showErrorMessage('Upload failed. Check output for details.');
+            } finally {
+                if (wasActive && !serialConnectionManager.isActive()) {
                     await serialConnectionManager.start(port, board);
                 }
+            }
+        });
+    }));
 
+    context.subscriptions.push(vscode.commands.registerCommand('vs-arduino.addBoardManagerUrl', async () => {
+        const presets = [
+            {
+                label: 'ESP32 (Espressif Systems)',
+                description: 'Official ESP32 platform URL',
+                url: 'https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json'
+            },
+            {
+                label: 'ESP8266 (ESP8266 Community)',
+                description: 'ESP8266 boards platform URL',
+                url: 'https://arduino.esp8266.com/stable/package_esp8266com_index.json'
+            },
+            {
+                label: 'Raspberry Pi Pico / RP2040 (Earle Philhower)',
+                description: 'RP2040 Arduino core URL',
+                url: 'https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json'
+            },
+            {
+                label: 'STM32 (STMicroelectronics)',
+                description: 'Official STM32 platform URL',
+                url: 'https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json'
+            },
+            {
+                label: '$(plus) Custom URL...',
+                description: 'Enter a custom board manager package URL',
+                url: ''
+            }
+        ];
+
+        const selected = await vscode.window.showQuickPick(presets, {
+            placeHolder: 'Select a popular platform or enter custom URL'
+        });
+
+        if (!selected) { return; }
+
+        let targetUrl = selected.url;
+        if (!targetUrl) {
+            const input = await vscode.window.showInputBox({
+                prompt: 'Enter Additional Board Manager URL (e.g. https://.../package_xxx_index.json)',
+                placeHolder: 'https://...'
+            });
+            if (!input || !input.trim()) { return; }
+            targetUrl = input.trim();
+        }
+
+        const config = vscode.workspace.getConfiguration('vs-arduino');
+        const currentUrls = config.get<string[]>('additionalUrls') || [];
+        if (currentUrls.includes(targetUrl)) {
+            vscode.window.showInformationMessage(`URL already exists in configuration: ${targetUrl}`);
+            return;
+        }
+
+        const updatedUrls = [...currentUrls, targetUrl];
+        await config.update('additionalUrls', updatedUrls, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`Added Board Manager URL: ${targetUrl}`);
+
+        const updateChoice = await vscode.window.showInformationMessage(
+            'Board Manager URL added. Would you like to update board indexes now?',
+            'Update Indexes Now',
+            'Later'
+        );
+        if (updateChoice === 'Update Indexes Now') {
+            await vscode.commands.executeCommand('vs-arduino.updateIndex');
+        }
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('vs-arduino.updateIndex', async () => {
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Updating Board & Library Indexes...',
+            cancellable: true
+        }, async (progress, token) => {
+            try {
+                outputChannel.show(true);
+                await cliManager.updateIndex(token);
+                vscode.window.showInformationMessage('Board & Library indexes updated successfully!');
             } catch (error) {
-                vscode.window.showErrorMessage('Upload failed. Check output for details.');
+                if (token.isCancellationRequested || error instanceof vscode.CancellationError) {
+                    vscode.window.showInformationMessage('Index update cancelled.');
+                    return;
+                }
+                const errorMsg = error instanceof Error ? error.message : String(error);
+                outputChannel.appendLine(`[Index] Update failed: ${errorMsg}`);
+                vscode.window.showErrorMessage('Failed to update indexes. See output for details.');
             }
         });
     }));
