@@ -323,6 +323,23 @@ export class ArduinoCliManager {
         });
     }
 
+    private runner = {
+        runCommand: async (args: string[]): Promise<{ stdout: string; stderr: string }> => {
+            return this.runCliCommandStream(args);
+        }
+    };
+
+    public async installBoard(pack: string, arch: string): Promise<void> {
+        const args = ['core', 'install', `${pack}:${arch}`, ...this.getAdditionalUrlsArgs()];
+        await this.runner.runCommand(args);
+    }
+
+    public async getBoardList(): Promise<any> {
+        const args = ['board', 'listall', '--format', 'json', ...this.getAdditionalUrlsArgs()];
+        const result = await this.runner.runCommand(args);
+        return JSON.parse(result.stdout);
+    }
+
     public async getBoardListAll(): Promise<any[]> {
         try {
             const additionalUrlsArgs = this.getAdditionalUrlsArgs();
@@ -569,6 +586,102 @@ export class ArduinoCliManager {
         }
     }
 
+    private _onConfigChanged = new vscode.EventEmitter<any>();
+    public readonly onConfigChanged = this._onConfigChanged.event;
+
+    public broadcastConfigChange(updatedConfig: any): void {
+        this._onConfigChanged.fire(updatedConfig);
+    }
+
+    public async getConfig(): Promise<any> {
+        const config = vscode.workspace.getConfiguration('vs-arduino');
+        const board = config.get<string>('board') || '';
+        return {
+            port: config.get<string>('port') || '',
+            fqbn: board,
+            board: board,
+            boardName: config.get<string>('boardName') || '',
+            programmer: config.get<string>('programmer') || '',
+            programmerName: config.get<string>('programmerName') || ''
+        };
+    }
+
+    public async saveConfig(updatedConfig: any): Promise<void> {
+        const config = vscode.workspace.getConfiguration('vs-arduino');
+        if (updatedConfig.port !== undefined) {
+            await config.update('port', updatedConfig.port, vscode.ConfigurationTarget.Global);
+        }
+        const fqbn = updatedConfig.fqbn !== undefined ? updatedConfig.fqbn : updatedConfig.board;
+        if (fqbn !== undefined) {
+            await config.update('board', fqbn, vscode.ConfigurationTarget.Global);
+        }
+        if (updatedConfig.boardName !== undefined) {
+            await config.update('boardName', updatedConfig.boardName, vscode.ConfigurationTarget.Global);
+        }
+    }
+
+    public async autoDetectBoard(port?: string): Promise<any> {
+        try {
+            const data = await this.runCliCommandJson(['board', 'list', '--format', 'json']);
+            const ports = data.detected_ports || [];
+            for (const p of ports) {
+                if (!port || p.port?.address === port) {
+                    if (p.matching_boards && p.matching_boards.length > 0) {
+                        return {
+                            fqbn: p.matching_boards[0].fqbn,
+                            name: p.matching_boards[0].name
+                        };
+                    }
+                }
+            }
+            return null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    public async updatePort(newPort: string): Promise<void> {
+        const currentConfig = await this.getConfig();
+        const detectedBoard = await this.autoDetectBoard(newPort);
+        
+        let resolvedFqbn = currentConfig.fqbn;
+
+        if (!resolvedFqbn && detectedBoard && detectedBoard.fqbn) {
+            resolvedFqbn = detectedBoard.fqbn;
+        }
+
+        const updatedConfig = {
+            ...currentConfig,
+            port: newPort,
+            fqbn: resolvedFqbn
+        };
+
+        await this.saveConfig(updatedConfig);
+        this.broadcastConfigChange(updatedConfig);
+    }
+
+    public async updateBoard(fqbn: string): Promise<void> {
+        const currentConfig = await this.getConfig();
+        let boardName = currentConfig.boardName;
+        try {
+            const boards = await this.getBoardListAll();
+            const matched = boards.find((b: any) => b.fqbn === fqbn);
+            if (matched) {
+                boardName = matched.name;
+            }
+        } catch (e) {
+            // ignore if unable to query board list
+        }
+        const updatedConfig = {
+            ...currentConfig,
+            fqbn: fqbn,
+            board: fqbn,
+            boardName: boardName || fqbn
+        };
+        await this.saveConfig(updatedConfig);
+        this.broadcastConfigChange(updatedConfig);
+    }
+
     public async autoDetectBoardAndPort(): Promise<any> {
         try {
             const data = await this.runCliCommandJson(['board', 'list', '--format', 'json']);
@@ -720,3 +833,24 @@ export class ArduinoCliManager {
         });
     }
 }
+
+export async function updatePort(this: any, newPort: string): Promise<void> {
+    const currentConfig = await this.getConfig();
+    const detectedBoard = await this.autoDetectBoard(newPort);
+    
+    let resolvedFqbn = currentConfig.fqbn;
+
+    if (!resolvedFqbn && detectedBoard && detectedBoard.fqbn) {
+        resolvedFqbn = detectedBoard.fqbn;
+    }
+
+    const updatedConfig = {
+        ...currentConfig,
+        port: newPort,
+        fqbn: resolvedFqbn
+    };
+
+    await this.saveConfig(updatedConfig);
+    this.broadcastConfigChange(updatedConfig);
+}
+

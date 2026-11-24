@@ -73,7 +73,7 @@ export function activate(context: vscode.ExtensionContext) {
     const diagnosticCollection = vscode.languages.createDiagnosticCollection('arduino');
     context.subscriptions.push(diagnosticCollection);
 
-    controlPanelProvider = new ControlPanelProvider(context.extensionUri);
+    controlPanelProvider = new ControlPanelProvider(context.extensionUri, cliManager);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(ControlPanelProvider.viewType, controlPanelProvider)
     );

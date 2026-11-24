@@ -520,6 +520,14 @@
       {
         "title": "VS Arduino",
         "properties": {
+          "vs-arduino.additionalUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Additional Boards Manager URLs for third-party boards."
+          },
           "vs-arduino.arduinoCliPath": {
             "type": "string",
             "default": "",
