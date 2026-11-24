@@ -155,6 +155,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
             const config = vscode.workspace.getConfiguration('vs-arduino');
             const currentPort = config.get<string>('port');
+            const currentBoard = config.get<string>('board');
 
             const items: vscode.QuickPickItem[] = ports.map(p => {
                 const isSelected = p.port.address === currentPort;
@@ -171,12 +172,9 @@ export function activate(context: vscode.ExtensionContext) {
             if (selected) {
                 await config.update('port', selected._address, vscode.ConfigurationTarget.Global);
 
-                if (selected._matching && selected._matching.length > 0) {
+                if (!currentBoard && selected._matching && selected._matching.length > 0) {
                     await config.update('board', selected._matching[0].fqbn, vscode.ConfigurationTarget.Global);
                     await config.update('boardName', selected._matching[0].name, vscode.ConfigurationTarget.Global);
-                } else {
-                    await config.update('board', '', vscode.ConfigurationTarget.Global);
-                    await config.update('boardName', '', vscode.ConfigurationTarget.Global);
                 }
 
                 vscode.window.showInformationMessage(`Port set to ${selected._address}`);
